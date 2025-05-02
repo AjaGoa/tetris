@@ -1,0 +1,126 @@
+push!() - adds into array []
+append!() - can add multiple elements into array 
+rand() - chooses random thing from array
+
+isa() - check if correct data structure
+
+https://www.baeldung.com/cs/tetris-piece-rotation-algorithm
+https://github.com/jonhoo/tetris-tutorial/blob/master/doc/code.md
+
+https://github.com/dillondaudert/Tetris.jl/tree/main
+
+https://github.com/aviks/GameZero.jl/tree/master/example/BasicGame 
+
+Sure! Let’s get into **`deepcopy()`** — it’s a simple but *very important* tool in Julia when you want to **fully duplicate an object**, not just pass around references.
+
+---
+
+### 🔹 **What is `deepcopy()`?**
+
+`deepcopy(obj)` creates a **completely new copy** of `obj`, including **all objects inside it** (recursively).  
+It means:  
+> Not just the container is copied — everything nested inside (arrays, dictionaries, structs...) is **also copied**, so the new object is **entirely independent**.
+
+---
+
+### ⚡ **Why does this matter?**
+
+By default in Julia, **mutable objects (like arrays)** are passed and assigned **by reference**.
+
+Example (without `deepcopy`):
+
+```julia
+a = [1, 2, 3]
+b = a        # just another reference to the same array
+b[1] = 99
+
+println(a)   # Output: [99, 2, 3]  —> a also changed!
+```
+
+If you want **a real, independent copy**, you use `deepcopy`:
+
+```julia
+a = [1, 2, 3]
+b = deepcopy(a)
+b[1] = 99
+
+println(a)   # Output: [1, 2, 3]  —> a is untouched
+println(b)   # Output: [99, 2, 3]
+```
+
+---
+
+### 🧩 **Shallow copy vs Deep copy**
+
+| Method           | What it copies |
+|------------------|----------------|
+| `copy(obj)`      | **Shallow copy**: copies the container, but elements inside still point to the same objects |
+| `deepcopy(obj)`  | **Deep copy**: copies container **and** all nested objects |
+
+Example:
+
+```julia
+a = [[1, 2], [3, 4]]
+b = copy(a)          # shallow copy
+b[1][1] = 99
+
+println(a)   # Output: [[99, 2], [3, 4]]  —> inner array was shared!
+```
+
+Now with `deepcopy`:
+
+```julia
+a = [[1, 2], [3, 4]]
+b = deepcopy(a)
+b[1][1] = 99
+
+println(a)   # Output: [[1, 2], [3, 4]]  —> a is safe
+```
+
+---
+
+### ⚠️ **When should you actually use `deepcopy()`?**
+
+- When you need a **completely independent copy** of a complex object (like a board game state, graph, or nested array), and you plan to **mutate** it.
+- Especially useful in **backtracking algorithms**, **undo/redo functionality**, or **cloning data structures**.
+
+---
+
+### 🚫 **When *not* to use `deepcopy()`**
+
+- **Avoid blindly using it everywhere** — it can be **slow** for large or complex structures because it has to recursively copy *everything*.
+- If you don’t plan to mutate nested elements, `copy()` or simple assignment might be enough.
+
+---
+
+### 📝 **One-line definition**
+
+> **`deepcopy(obj)` creates an entirely independent clone of `obj`, recursively copying everything inside it — so changing one won't affect the other.**
+
+---
+
+If you want, I can show a **concrete board game example** where `deepcopy()` is useful. Want to see that? 🎲
+
+
+špatně v gitu adresář(je tam adresář a pod adresář)
+konkrétní enviroment
+
+- podívat se na tabuláturátorové nastavení (dat tam 4 mezery misto opravdoveho tab)
+
+upgrady: 
+- zobrazit další kostičku
+- udělat omezení na prohazování
+-DONE misto str udelat ciselnou reprezentaci
+
+multiple dispatch 
+- zobecnenni OOP, 
+v OOP (je single dispatch)
+
+
+makro @which, rekne mi kterou implementaci fce mi to zavola
+
+neco jako enum v RUSTu(?)
+
+Erasmus: 
+- kouknout jestli jsou nejake schuze
+- kouknout na univerzitni portalz

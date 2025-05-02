@@ -446,7 +446,7 @@ function update(g::Game)
 end
 
 function draw(g::Game)
-    global gs, over_text1, over_text2, over_text3
+    global gs
     
     if gs.startscreen
         start(g)

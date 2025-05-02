@@ -431,7 +431,7 @@ function on_key_down(g::Game, key)
     elseif key == 32
         #space
         fall(gs)
-        play_sound("hard_drop")
+        #play_sound("hard_drop")
     elseif key == 97
         #a
         hold(gs)

@@ -104,12 +104,12 @@ konkrétní enviroment
 multiple dispatch 
 - zobecnenni OOP, 
 v OOP (je single dispatch)
-
+https://en.wikipedia.org/wiki/Multiple_dispatch
 
 makro @which, rekne mi kterou implementaci fce mi to zavola
 
 neco jako enum v RUSTu(?)
 
-Erasmus: 
+Erasmus (ktery neni erasmus): 
 - nekde nejake schuze
 - univerzitni portalz

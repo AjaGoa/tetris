@@ -39,7 +39,7 @@ using GameZero, Random, Colors
 
 
 # Konstatny
-	BASE = 24
+	BASE = 30
 	w = 10
 	h = 20
 	WIDTH = w*BASE
@@ -149,21 +149,17 @@ global gs = init_game_state()
     end
 
     function drawHoldedPiece(g::Game, holded_piece)
-        # vykresleni holded piece, checknout že nejde podvádět :)
-
-        if holded_piece != 0
-
+        # vykresleni holded piece, checknout že nejde podvádět :)   
+        if holded_piece != 0    
             # nastaveni pozice
             height = 3
-            width = (w - 4)*BASE
-
-            for x in 1:size(holded_piece.pattern, 2), y in 1:size(holded_piece.pattern, 1)
-
+            width = (w - 4)*BASE    
+            for x in 1:size(holded_piece.pattern, 2), y in 1:size(holded_piece.pattern, 1)  
                 s = div(BASE, size(holded_piece.pattern, 1)) - 1 # - 1 aby se mi to vlezlo do horni lainy
                 rectH = height + (y-1)*s
                 rectW = width + (x-1)*s
                 q = GameZero.Rect(rectW, rectH, s, s) 
-                                
+
                 if holded_piece.pattern[y,x] != 1
                     GameZero.draw(g.screen, q, colors[holded_piece.pattern[y,x]], fill = true)
                 end
@@ -288,7 +284,8 @@ function start(g::Game)
         "DOWN arrow = speed up falling",
         "UP arrow = rotate",
         "SPACE = drop",
-        "A = hold"
+        "A = hold",
+        "ESC = pause"
         ]
     
     text_actors = [

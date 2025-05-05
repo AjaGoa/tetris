@@ -39,7 +39,7 @@ using GameZero, Random, Colors
 
 
 # Konstatny
-	BASE = 30
+	BASE = 27
 	w = 10
 	h = 20
 	WIDTH = w*BASE

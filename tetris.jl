@@ -63,7 +63,7 @@ mutable struct GameState
     board::Matrix{Int}
     piece::Piece
     next_piece::Piece
-    holded_piece::Union{Piece, Int}  # allow 0 as initial value
+    held_piece::Union{Piece, Int}  # allow 0 as initial value
     change_count::Bool
     lines::Int
     level::Int
@@ -86,7 +86,7 @@ function init_game_state()
         fill(1, h + 1, w),  # board
         new_piece(),        # current piece
         new_piece(),        # next piece
-        0,                  # holded_piece (none)
+        0,                  # held_piece (none)
         false,              # change_count
         0,                  # lines
         1,                  # level
@@ -148,20 +148,20 @@ global gs = init_game_state()
         end
     end
 
-    function drawHoldedPiece(g::Game, holded_piece)
-        # vykresleni holded piece, checknout že nejde podvádět :)   
-        if holded_piece != 0    
+    function drawheldPiece(g::Game, held_piece)
+        # vykresleni held piece, checknout že nejde podvádět :)   
+        if held_piece != 0    
             # nastaveni pozice
             height = 3
             width = (w - 4)*BASE    
-            for x in 1:size(holded_piece.pattern, 2), y in 1:size(holded_piece.pattern, 1)  
-                s = div(BASE, size(holded_piece.pattern, 1)) - 1 # - 1 aby se mi to vlezlo do horni lainy
+            for x in 1:size(held_piece.pattern, 2), y in 1:size(held_piece.pattern, 1)  
+                s = div(BASE, size(held_piece.pattern, 1)) - 1 # - 1 aby se mi to vlezlo do horni lainy
                 rectH = height + (y-1)*s
                 rectW = width + (x-1)*s
                 q = GameZero.Rect(rectW, rectH, s, s) 
 
-                if holded_piece.pattern[y,x] != 1
-                    GameZero.draw(g.screen, q, colors[holded_piece.pattern[y,x]], fill = true)
+                if held_piece.pattern[y,x] != 1
+                    GameZero.draw(g.screen, q, colors[held_piece.pattern[y,x]], fill = true)
                 end
             end
         end        
@@ -359,12 +359,12 @@ end
         now_playing = deepcopy(gs.piece) #!! https://www.jlhub.com/julia/manual/en/function/deepcopy
         if gs.change_count == false
             play_sound("retro")
-            if gs.holded_piece == 0
-                gs.holded_piece = now_playing 
+            if gs.held_piece == 0
+                gs.held_piece = now_playing 
                 gs.piece = new_piece()
         
-            else gs.holded_piece != 0
-                gs.piece, gs.holded_piece = gs.holded_piece, now_playing
+            else gs.held_piece != 0
+                gs.piece, gs.held_piece = gs.held_piece, now_playing
                 gs.piece.x = div(w, 2) - 1 
                 gs.piece.y = 0 
             end
@@ -454,7 +454,7 @@ function draw(g::Game)
         text_level.pos = (BASE, 0)
         GameZero.draw(text_level)
         drawNextPiece(g, gs.next_piece)
-        drawHoldedPiece(g, gs.holded_piece)
+        drawheldPiece(g, gs.held_piece)
        
         if gs.gameover
             finish(g, gs.board)

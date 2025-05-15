@@ -47,8 +47,8 @@ mutable struct Piece
     x::Int	#top left corner
     y::Int
     color::Int
-    axis_L::Int
-    axis_R::Int #axis of rotation
+    #axis_L::Int
+    #axis_R::Int #axis of rotation
 end
 
 mutable struct GameState
@@ -68,7 +68,7 @@ end
 function new_piece()
 
     idx = rand(1:length(PIECES)) #chosing random position to then choose from PIECES tuple
-    return Piece(PIECES[idx], div(w, 2) - 1, 0, idx+1, 1, 1) #v colors +1 protoze tam je jeste cerna
+    return Piece(PIECES[idx], div(w, 2) - 1, 0, idx+1) #v colors +1 protoze tam je jeste cerna
     #gives Piece of (pattern corresponding to idx, x = horizontal center, y = top, corresponding color)
      
 end
@@ -100,7 +100,8 @@ global gs = init_game_state()
 
     function drawBoard(g::Game, board, piece)
         # Draw locked board
-        for y in 2:h, x in 1:w
+        for y in 2:h, x in 1:w 
+            # leaving one row empty for info
             C = colors[board[y, x]]
             drawSquare(g, x - 1, y - 1, C)
         end
@@ -115,7 +116,7 @@ global gs = init_game_state()
                     y = piece.y + i
                     if 1 ≤ x ≤ w && 2 ≤ y ≤ h   # only draw inside visible board (start from line 2)
                         C = colors[piece.pattern[i, j]]
-                        drawSquare(g, x - 1, y - 1, C)
+                        drawSquare(g, x - 1, y - 1, C) # - 1 to go from board (1, 1) start indexing to graphics (0, 0 )
                     end
                 end
             end
@@ -358,7 +359,7 @@ end
     
         gs.piece.y += 1
         if collisions(gs.piece, gs.board)
-            gs.piece.y -= 1
+            gs.piece.y -= 1 #return to the last pre-collision position
             lock_piece(gs)
             
         end
@@ -382,7 +383,7 @@ end
     end
 
     function rotate(gs::GameState)
-        new_pattern = rotate_left(gs.piece) #should rotate the pattern Matrix by 90 deg (theoretically counterclockwise? !Check!)
+        new_pattern = rotate_left(gs.piece) #transposed turned
         old_pattern = gs.piece.pattern
         gs.piece.pattern = new_pattern #redefining the current piece.pattern by variables
         

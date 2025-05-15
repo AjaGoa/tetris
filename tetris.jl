@@ -2,41 +2,31 @@ using GameZero, Random, Colors
 
 # Tetrominos
 	I = [
-		1 1 1 1;
-		2 2 2 2;
-		1 1 1 1;
-		1 1 1 1]
+		2 2 2 2 ]
 
 	J = [
-		3 1 1;
 		3 3 3;
-		1 1 1]
+		3 1 1]
 
 	L = [
-		1 1 4;
 		4 4 4;
-		1 1 1]
+		1 1 4]
 
 	O = [
 		5 5 1;
-		5 5 1;
-		1 1 1]
+		5 5 1]
 
 	T = [
 		1 6 1;
-		6 6 6;
-		1 1 1]
+		6 6 6]
 
 	S = [
 		1 7 7;
-		7 7 1;
-		1 1 1]
+		7 7 1]
 
 	Z = [	
 		8 8 1;
-		1 8 8;
-		1 1 1] 
-
+		1 8 8] 
 
 # Konstatny
 	BASE = 27
@@ -57,6 +47,8 @@ mutable struct Piece
     x::Int	#top left corner
     y::Int
     color::Int
+    axis_L::Int
+    axis_R::Int #axis of rotation
 end
 
 mutable struct GameState
@@ -76,7 +68,7 @@ end
 function new_piece()
 
     idx = rand(1:length(PIECES)) #chosing random position to then choose from PIECES tuple
-    return Piece(PIECES[idx], div(w, 2) - 1, 0, idx+1) #v colors +1 protoze tam je jeste cerna
+    return Piece(PIECES[idx], div(w, 2) - 1, 0, idx+1, 1, 1) #v colors +1 protoze tam je jeste cerna
     #gives Piece of (pattern corresponding to idx, x = horizontal center, y = top, corresponding color)
      
 end
@@ -136,7 +128,13 @@ global gs = init_game_state()
         
         for x in 1:size(next_piece.pattern, 2), y in 1:size(next_piece.pattern, 1)
             #size(next_piece.pattern, 1) --> # of rows, size(.., 2) --> # of columns
-            s = div(BASE, size(next_piece.pattern, 1)) 
+            a, b = size(next_piece.pattern)
+            if a > b
+                s = div(BASE, a) 
+            
+            else
+                s = div(BASE, b) 
+            end
             
             rectH = height + (y-1)*s
             rectW = width + (x-1)*s
@@ -154,8 +152,13 @@ global gs = init_game_state()
             # nastaveni pozice
             height = 3
             width = (w - 4)*BASE    
+            a, b = size(held_piece.pattern)
+            if a > b
+                s = div(BASE, a) - 1 # - 1 aby se mi to vlezlo do horniho radku
+            else
+                s = div(BASE, b) - 1
+            end
             for x in 1:size(held_piece.pattern, 2), y in 1:size(held_piece.pattern, 1)  
-                s = div(BASE, size(held_piece.pattern, 1)) - 1 # - 1 aby se mi to vlezlo do horni lainy
                 rectH = height + (y-1)*s
                 rectW = width + (x-1)*s
                 q = GameZero.Rect(rectW, rectH, s, s) 
@@ -171,20 +174,18 @@ function collisions(piece, board)
     
     for i in 1:size(piece.pattern, 1), j in 1:size(piece.pattern, 2)
         # i - rows, j - columns
-
-        if piece.pattern[i, j] != 1 # Check if the cell is part of the piece
+        piece.pattern[i, j] == 1 && continue # Skip empty cells in the piece pattern, doesnt neetd to go through everything
+        #if piece.pattern[i, j] != 1 # Check if the cell is part of the piece
             #if i, j position part of some piece, empty ones are ignored
 
             x = piece.x + j
             y = piece.y + i
             # switching into general x, y position
 
-            if x < 1 || x > w || y > h || (y > 0 && board[y, x] != 1)
+            (x < 1 || x > w || y > h || (y > 0 && board[y, x] != 1)) && return true
             #if left wall collision OR right wall OR floor OR anoher block
 
-                return true # Collision detected
-            end
-        end
+                #return true # Collision detected
     end
     return false # No collision
 end
@@ -226,7 +227,7 @@ function clear_lines(gs::GameState)
 	rows, cols = size(gs.board)
 
     full_rows = [all(cell != 1 for cell in gs.board[r, :]) for r in 1:rows]
-		#detect full rows
+		#detect full rows, gives boolean array
 
     num_full = count(full_rows)
 		#how many full rows
@@ -303,6 +304,54 @@ function start(g::Game)
     GameZero.draw(start_text_1)  
 
 end
+
+function rotate_left(piece)
+    # common filled place is 1st line, 2nd position
+    x, y = size(piece.pattern)
+    new_pattern = fill(1, (y, x)) # Create a new pattern with swapped dimensions
+    
+    for i in 1:x, j in 1:y
+        new_pattern[y - j + 1, i] = piece.pattern[i, j]
+    end
+    piece.pattern = new_pattern
+    # just flipped transposed
+end
+
+#= function rotate_left(piece)
+    next version with square matrix where I fix one center pivot point (added to piece struct) and then eliminate it, but still dont have a way how to redefine the position of the pivot in the new matrix
+    x, y = size(piece.pattern)
+    M_size = max(x, y)
+    new_pattern = fill(1, (M_size, M_size))
+    fin_p = fill(1, (y, x))
+    
+    if M_size % 2 != 0
+        center = div(M_size, 2) + 1
+        # Rotate counter-clockwise around the center
+        for i in 1:x, j in 1:y
+            if piece.pattern[i, j] != 1
+                new_i = center - (j - center)
+                new_j = center + (i - center)
+                new_pattern[new_i, new_j] = piece.pattern[i, j]
+            end
+        end
+        full_rows = [all(cell != 1 for cell in new_pattern[r, :]) for r in 1:M_size]
+        new_row_idx = M_size
+        for r in M_size:-1:1  # Start from the bottom and move up
+            if !full_rows[r]  # keep non-full rows
+                new_pattern_2[new_row_idx, :] = new_pattern[r, :]
+                new_row_idx -= 1
+            end
+        end
+
+        #stejne akorat pro sloupce    full_rows = [all(cell != 1 for cell in new_pattern[r, :]) for r in 1:M_size]
+    else
+        # For even sizes, use Julia's built-in rotation
+        fin_p = rotr90(piece.pattern)
+    end
+    
+    return new_pattern  # Actually return the rotated pattern
+end
+=# 
 #moving functions
 
     function move_down(gs::GameState)
@@ -333,7 +382,7 @@ end
     end
 
     function rotate(gs::GameState)
-        new_pattern = rotr90(gs.piece.pattern) #should rotate the pattern Matrix by 90 deg (theoretically counterclockwise? !Check!)
+        new_pattern = rotate_left(gs.piece) #should rotate the pattern Matrix by 90 deg (theoretically counterclockwise? !Check!)
         old_pattern = gs.piece.pattern
         gs.piece.pattern = new_pattern #redefining the current piece.pattern by variables
         
@@ -415,17 +464,18 @@ end
 
 function level_up(gs::GameState)
        
-    if gs.lines >= 2
+    if gs.lines >= 1
         rest = mod(gs.lines, 2)  
         change = div(gs.lines - rest, 2)
         gs.lines = rest
-        if gs.speed > 0 + change
+        #if gs.speed > 0 + change # originally to avoid negative speed and just stay at speed 0, but actually it is not be a problem
             gs.speed = gs.speed - change
-        else 
+        #=else 
             gs.speed = 0
-        end
+        end=#
         gs.level = gs.level + change
     end
+    
 end
 
 function update(g::Game)
@@ -437,6 +487,13 @@ function update(g::Game)
             if gs.timer > gs.speed
                 move_down(gs)
                 gs.timer = 0
+            #=
+            DeepSeek suggest
+            Garbage collection - clean unused data from the memory, doesnt need to run every cycle
+            https://www.jlhub.com/julia/manual/en/function/gc
+            if rand() < 0.01  # ~1% chance to run GC (example)
+                GC.gc()
+            end =#
             end	
         end
     end
@@ -462,3 +519,19 @@ function draw(g::Game)
         end
     end
 end
+
+#= 
+why not using 0 in shapes? array  start from 1, and I did not find quick way how to overcome that
+why empty rows/cols? I thought that rotr90 could rotate only square matrices, but that is actually not true
+faster collisions checking? fair
+own rotate? actually just rewritten rotr90 right now :/
+which axis? rotr90 - transposed and "turned" upside down, probably no axis
+no symbolic key codes? (g.keyboard.XY for some reason not working for me)
+why 0+change? thought it would be problem to have negative speed, but again not true
+how did you get sounds? 
+rotate left? 
+quit? 
+what A should do?
+instructions how to start?
+2.7 GB - dont know what to do with that, maybe by always rewriting the whole board, Im not sure what GC.gc() does - clear the unused old.pattern (and similar things)?
+=#

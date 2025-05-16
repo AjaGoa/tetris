@@ -6,27 +6,27 @@ using GameZero, Random, Colors
 
 	J = [
 		3 3 3;
-		3 1 1]
+		3 0 0]
 
 	L = [
 		4 4 4;
-		1 1 4]
+		0 0 4]
 
 	O = [
-		5 5 1;
-		5 5 1]
+		5 5 0;
+		5 5 0]
 
 	T = [
-		1 6 1;
+		0 6 0;
 		6 6 6]
 
 	S = [
-		1 7 7;
-		7 7 1]
+		0 7 7;
+		7 7 0]
 
 	Z = [	
-		8 8 1;
-		1 8 8] 
+		1 1 0;
+		0 1 1] 
 
 # Konstatny
 	BASE = 27
@@ -35,8 +35,8 @@ using GameZero, Random, Colors
 	WIDTH = w*BASE
 	HEIGHT = h*BASE
 	BACKGROUND = colorant"slateblue1"
-    PIECES = (I, J, L, O, T, S, Z) # tuple - static
-	COLORS = ("black", "cyan", "blue", "green", "yellow", "hotpink", "red", "orange")
+    PIECES = (Z, I, J, L, O, T, S) # tuple - static
+	COLORS = ("cyan", "blue", "green", "yellow", "hotpink", "red", "orange")
     
     colors = [parse(Colorant, c) for c in COLORS]
     
@@ -68,14 +68,14 @@ end
 function new_piece()
 
     idx = rand(1:length(PIECES)) #chosing random position to then choose from PIECES tuple
-    return Piece(PIECES[idx], div(w, 2) - 1, 0, idx+1) #v colors +1 protoze tam je jeste cerna
+    return Piece(PIECES[idx], div(w, 2) - 1, 0, idx) #v colors +1 protoze tam je jeste cerna
     #gives Piece of (pattern corresponding to idx, x = horizontal center, y = top, corresponding color)
      
 end
 
 function init_game_state()
     return GameState(
-        fill(1, h + 1, w),  # board
+        fill(0, h + 1, w),  # board
         new_piece(),        # current piece
         new_piece(),        # next piece
         0,                  # held_piece (none)
@@ -102,7 +102,11 @@ global gs = init_game_state()
         # Draw locked board
         for y in 2:h, x in 1:w 
             # leaving one row empty for info
-            C = colors[board[y, x]]
+            if board[y, x] == 0
+                C = colorant"black"
+            else
+                C = colors[board[y, x]]
+            end
             drawSquare(g, x - 1, y - 1, C)
         end
     
@@ -111,11 +115,15 @@ global gs = init_game_state()
             hp, wp = size(piece.pattern)
     
             for i in 1:hp, j in 1:wp
-                if piece.pattern[i, j] != 1
+                if piece.pattern[i, j] != 0
                     x = piece.x + j
                     y = piece.y + i
                     if 1 ≤ x ≤ w && 2 ≤ y ≤ h   # only draw inside visible board (start from line 2)
-                        C = colors[piece.pattern[i, j]]
+                        if piece.pattern[i, j] == 0
+                            C = colorant"black"
+                        else
+                            C = colors[piece.pattern[i, j]]
+                        end
                         drawSquare(g, x - 1, y - 1, C) # - 1 to go from board (1, 1) start indexing to graphics (0, 0 )
                     end
                 end
@@ -141,7 +149,7 @@ global gs = init_game_state()
             rectW = width + (x-1)*s
             q = GameZero.Rect(rectW, rectH, s, s) 
             
-            if next_piece.pattern[y,x] != 1
+            if next_piece.pattern[y,x] != 0
                 GameZero.draw(g.screen, q, colors[next_piece.pattern[y,x]], fill = true)
             end        
         end
@@ -164,7 +172,7 @@ global gs = init_game_state()
                 rectW = width + (x-1)*s
                 q = GameZero.Rect(rectW, rectH, s, s) 
 
-                if held_piece.pattern[y,x] != 1
+                if held_piece.pattern[y,x] != 0
                     GameZero.draw(g.screen, q, colors[held_piece.pattern[y,x]], fill = true)
                 end
             end
@@ -175,7 +183,7 @@ function collisions(piece, board)
     
     for i in 1:size(piece.pattern, 1), j in 1:size(piece.pattern, 2)
         # i - rows, j - columns
-        piece.pattern[i, j] == 1 && continue # Skip empty cells in the piece pattern, doesnt neetd to go through everything
+        piece.pattern[i, j] == 0 && continue # Skip empty cells in the piece pattern, doesnt neetd to go through everything
         #if piece.pattern[i, j] != 1 # Check if the cell is part of the piece
             #if i, j position part of some piece, empty ones are ignored
 
@@ -183,7 +191,7 @@ function collisions(piece, board)
             y = piece.y + i
             # switching into general x, y position
 
-            (x < 1 || x > w || y > h || (y > 0 && board[y, x] != 1)) && return true
+            (x < 1 || x > w || y > h || (y > 0 && board[y, x] != 0)) && return true
             #if left wall collision OR right wall OR floor OR anoher block
 
                 #return true # Collision detected
@@ -199,7 +207,7 @@ function lock_piece(gs::GameState)
     for i in 1:size(gs.piece.pattern, 1), j in 1:size(gs.piece.pattern, 2)
         #size(p.pattern, 1) --> # of rows, size(.., 2) --> # of columns
 
-        if gs.piece.pattern[i, j] != 1 && gs.piece.y + i > 0
+        if gs.piece.pattern[i, j] != 0 && gs.piece.y + i > 0
             #if filled and not above the board then
 
             if 1 <= gs.piece.y + i <= h && 1 <= gs.piece.x + j <= w
@@ -227,7 +235,7 @@ function clear_lines(gs::GameState)
     #clearing lines
 	rows, cols = size(gs.board)
 
-    full_rows = [all(cell != 1 for cell in gs.board[r, :]) for r in 1:rows]
+    full_rows = [all(cell != 0 for cell in gs.board[r, :]) for r in 1:rows]
 		#detect full rows, gives boolean array
 
     num_full = count(full_rows)
@@ -237,7 +245,7 @@ function clear_lines(gs::GameState)
     if num_full > 0
         # Remove full rows by shifting down non-full rows
 		gs.lines = gs.lines + num_full
-        new_board = fill(1, rows, cols)  # Start with an empty board
+        new_board = fill(0, rows, cols)  # Start with an empty board
 
         # Copy only the remaining rows downward
         new_row_idx = rows
@@ -257,7 +265,7 @@ end
 function finish(g::Game, board)
 	
 	for v in 5:10, t in 1:w
-		board[v, t] = 7
+		board[v, t] = 6
 	end 
     
 	over_text_1 = TextActor("GAME OVER!", "comicbd", color = [0, 1, 0, 0])
@@ -309,7 +317,7 @@ end
 function rotate_left(piece)
     # common filled place is 1st line, 2nd position
     x, y = size(piece.pattern)
-    new_pattern = fill(1, (y, x)) # Create a new pattern with swapped dimensions
+    new_pattern = fill(0, (y, x)) # Create a new pattern with swapped dimensions
     
     for i in 1:x, j in 1:y
         new_pattern[y - j + 1, i] = piece.pattern[i, j]
@@ -522,7 +530,7 @@ function draw(g::Game)
 end
 
 #= 
-why not using 0 in shapes? array  start from 1, and I did not find quick way how to overcome that
+why not using 0 in shapes? array  start from 1, now added if/else, but that feels slightly ugly
 why empty rows/cols? I thought that rotr90 could rotate only square matrices, but that is actually not true
 faster collisions checking? fair
 own rotate? actually just rewritten rotr90 right now :/
